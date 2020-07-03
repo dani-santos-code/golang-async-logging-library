@@ -54,15 +54,13 @@ func (al Alog) formatMessage(msg string) string {
 
 func (al Alog) write(msg string, wg *sync.WaitGroup) error {
 	al.m.Lock()
+	defer al.m.Unlock()
 	_, err := al.dest.Write([]byte(al.formatMessage(msg)))
 	if err != nil {
-		wg.Add(1)
-		al.errorCh <- err
-		go al.ErrorChannel()
-		wg.Done()
+		go func(err error) {
+			al.errorCh <- err
+		}(err)
 	}
-
-	al.m.Unlock()
 	return nil
 }
 
